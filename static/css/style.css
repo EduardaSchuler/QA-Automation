@@ -1,0 +1,384 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, Helvetica, sans-serif;
+
+    min-height: 100vh;
+
+    background: #f2f2f2;
+
+    color: #1a1a1a;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 30px;
+}
+
+
+.container {
+    width: 100%;
+    max-width: 600px;
+}
+
+
+.card {
+    background: #ffffff;
+
+    border: 1px solid #dddddd;
+
+    border-radius: 16px;
+
+    padding: 40px;
+
+    box-shadow:
+        0 15px 40px rgba(0, 0, 0, 0.12);
+}
+
+
+/* HEADER */
+
+.header {
+    text-align: center;
+
+    margin-bottom: 35px;
+}
+
+
+.logo {
+    width: 110px;
+    height: 70px;
+
+    margin: 0 auto 20px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.logo img {
+    max-width: 100%;
+    max-height: 100%;
+
+    object-fit: contain;
+}
+
+
+.header h1 {
+    font-size: 28px;
+
+    margin-bottom: 10px;
+
+    color: #1a1a1a;
+}
+
+
+.header p {
+    color: #666666;
+
+    font-size: 14px;
+
+    line-height: 1.6;
+}
+
+
+/* FORM */
+
+.form-group {
+    margin-bottom: 25px;
+}
+
+
+.form-group label {
+    display: block;
+
+    margin-bottom: 10px;
+
+    font-size: 14px;
+
+    font-weight: 600;
+
+    color: #333333;
+}
+
+
+/* UPLOAD */
+
+.upload-area {
+    position: relative;
+
+    border: 2px dashed #bdbdbd;
+
+    border-radius: 12px;
+
+    padding: 30px 20px;
+
+    text-align: center;
+
+    cursor: pointer;
+
+    background: #fafafa;
+
+    transition: 0.25s ease;
+}
+
+
+.upload-area:hover,
+.upload-area.dragover {
+    border-color: #f47b20;
+
+    background: #fff5ed;
+}
+
+
+.upload-area input {
+    position: absolute;
+
+    inset: 0;
+
+    width: 100%;
+    height: 100%;
+
+    opacity: 0;
+
+    cursor: pointer;
+}
+
+
+.upload-icon {
+    width: 45px;
+    height: 45px;
+
+    margin: 0 auto 15px;
+
+    border-radius: 10px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: #eeeeee;
+
+    color: #f47b20;
+
+    font-size: 24px;
+
+    font-weight: bold;
+}
+
+
+.upload-content h3 {
+    font-size: 15px;
+
+    margin-bottom: 6px;
+
+    color: #333333;
+}
+
+
+.upload-content p {
+    color: #777777;
+
+    font-size: 13px;
+
+    margin-bottom: 12px;
+}
+
+
+.file-info {
+    display: inline-block;
+
+    padding: 5px 10px;
+
+    border-radius: 6px;
+
+    background: #eeeeee;
+
+    color: #666666;
+
+    font-size: 11px;
+}
+
+
+/* NUMBER INPUT */
+
+.number-container {
+    position: relative;
+}
+
+
+.number-container input {
+    width: 100%;
+
+    padding: 13px 85px 13px 15px;
+
+    border: 1px solid #cccccc;
+
+    border-radius: 9px;
+
+    background: #ffffff;
+
+    color: #222222;
+
+    font-size: 14px;
+
+    outline: none;
+
+    transition: 0.2s;
+}
+
+
+.number-container input:focus {
+    border-color: #f47b20;
+
+    box-shadow:
+        0 0 0 3px rgba(244, 123, 32, 0.12);
+}
+
+
+.number-container span {
+    position: absolute;
+
+    right: 15px;
+
+    top: 50%;
+
+    transform: translateY(-50%);
+
+    color: #888888;
+
+    font-size: 12px;
+}
+
+
+.form-group small {
+    display: block;
+
+    margin-top: 7px;
+
+    color: #888888;
+
+    font-size: 11px;
+}
+
+
+/* BUTTON */
+
+.generate-button {
+    width: 100%;
+
+    padding: 14px;
+
+    border: none;
+
+    border-radius: 9px;
+
+    background: #f47b20;
+
+    color: #ffffff;
+
+    font-size: 14px;
+
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition: 0.25s ease;
+
+    box-shadow:
+        0 7px 18px rgba(244, 123, 32, 0.25);
+}
+
+
+.generate-button:hover {
+    background: #d96816;
+
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 10px 25px rgba(244, 123, 32, 0.30);
+}
+
+
+.generate-button:active {
+    transform: translateY(0);
+}
+
+
+.generate-button:disabled {
+    opacity: 0.7;
+
+    cursor: not-allowed;
+
+    transform: none;
+}
+
+
+/* LOADER */
+
+.loader {
+    display: none;
+
+    width: 16px;
+    height: 16px;
+
+    margin-left: 8px;
+
+    border: 2px solid rgba(255, 255, 255, 0.35);
+
+    border-top-color: #ffffff;
+
+    border-radius: 50%;
+
+    animation: spin 0.8s linear infinite;
+
+    vertical-align: middle;
+}
+
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+
+/* FOOTER */
+
+.footer {
+    margin-top: 30px;
+
+    display: flex;
+
+    justify-content: center;
+
+    gap: 8px;
+
+    color: #999999;
+
+    font-size: 11px;
+}
+
+
+/* RESPONSIVE */
+
+@media (max-width: 600px) {
+
+    body {
+        padding: 15px;
+    }
+
+    .card {
+        padding: 28px 22px;
+    }
+
+    .header h1 {
+        font-size: 24px;
+    }
+
+}

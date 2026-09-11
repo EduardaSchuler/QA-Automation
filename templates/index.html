@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Gerador de Testes</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+
+    <main class="container">
+
+        <div class="card">
+
+            <div class="header">
+                <div class="logo">
+                    <img src="{{ url_for('static', filename='images/Stihl_Logo.svg.webp') }}" alt="STIHL">
+                </div>
+
+                <h1>Gerador de Testes</h1>
+
+                <p>
+                    Envie sua Knowledge Base e gere automaticamente
+                    casos de teste para o seu agente.
+                </p>
+            </div>
+
+
+            <form id="testForm" action="/gerar" method="POST" enctype="multipart/form-data">
+
+                <div class="form-group">
+
+                    <label>Knowledge Base</label>
+
+                    <div class="upload-area" id="uploadArea">
+
+                        <input type="file" id="arquivo" name="arquivo" accept=".zip" required>
+
+                        <div class="upload-content">
+
+                            <div class="upload-icon">
+                                ↑
+                            </div>
+
+                            <h3 id="uploadTitle">
+                                Clique para selecionar
+                            </h3>
+
+                            <p id="uploadText">
+                                ou arraste seu arquivo ZIP aqui
+                            </p>
+
+                            <span class="file-info">
+                                Apenas arquivos .ZIP
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="quantidade">
+                        Quantidade de perguntas
+                    </label>
+
+                    <div class="number-container">
+
+                        <input type="number" id="quantidade" name="quantidade" value="10" min="1" max="100" required>
+
+                        <span>perguntas</span>
+
+                    </div>
+
+                    <small>
+                        Escolha entre 1 e 100 perguntas.
+                    </small>
+
+                </div>
+
+
+                <button type="submit" id="generateButton" class="generate-button">
+
+                    <span id="buttonText">
+                        Gerar testes
+                    </span>
+
+                    <span id="loader" class="loader"></span>
+
+                </button>
+
+            </form>
+
+
+            <div class="footer">
+
+                <span>Q&A Automation</span>
+
+                <span>•</span>
+
+                <span>Powered by TechLab</span>
+
+            </div>
+
+        </div>
+
+    </main>
+
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+
+</body>
+
+</html>
