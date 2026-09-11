@@ -7,7 +7,6 @@ MODOS DE EXECUÇÃO:
 1. Gerar perguntas e respostas a partir da Knowledge Base:
 
    python validar_agente.py gerar \
-       --tipo pdf \
        --pasta ./knowledge_base \
        --quantidade 10
 
@@ -19,15 +18,22 @@ MODOS DE EXECUÇÃO:
 3. Gerar os testes e testar o agente na sequência:
 
    python validar_agente.py completo \
-       --tipo pdf \
        --pasta ./knowledge_base \
        --quantidade 10
 
+O tipo de cada arquivo na pasta é detectado automaticamente
+pela extensão — basta colocar os arquivos na pasta, sem
+precisar informar o formato.
+
 Formatos suportados:
 
-- PDF
+- PDF (.pdf)
 - Word (.docx)
 - Excel (.xlsx / .xlsm)
+- Web Query (.iqy)
+
+Arquivos com extensão não reconhecida são ignorados (com
+aviso no console), não interrompem a execução.
 """
 
 import os
@@ -242,28 +248,6 @@ def ler_excel(caminho: str) -> str:
 # ============================================================
 
 
-def ler_arquivo(caminho: str, tipo: str) -> str:
-
-    if tipo == "pdf":
-
-        return ler_pdf(caminho)
-
-    elif tipo == "word":
-
-        return ler_word(caminho)
-
-    elif tipo == "excel":
-
-        return ler_excel(caminho)
-
-    elif tipo == "list":
-
-        return ler_iqy(caminho)
-
-    else:
-
-        raise ValueError(f"Tipo de arquivo não suportado: {tipo}")
-
 # ============================================================
 # LER LISTS
 # ============================================================
@@ -286,24 +270,53 @@ def ler_iqy(caminho: str) -> str:
 
 
 # ============================================================
+# MAPEAMENTO EXTENSÃO -> LEITOR
+# ============================================================
+#
+# Adicione aqui novos formatos: basta mapear a extensão
+# (em minúsculas, com o ponto) para a função de leitura
+# correspondente.
+
+EXTENSAO_PARA_LEITOR = {
+    ".pdf": ler_pdf,
+    ".docx": ler_word,
+    ".xlsx": ler_excel,
+    ".xlsm": ler_excel,
+    ".iqy": ler_iqy,
+}
+
+
+def ler_arquivo(caminho: str, extensao: str) -> str:
+
+    leitor = EXTENSAO_PARA_LEITOR.get(extensao)
+
+    if leitor is None:
+
+        raise ValueError(f"Extensão não suportada: {extensao}")
+
+    return leitor(caminho)
+
+
+# ============================================================
 # CARREGAR KNOWLEDGE BASE
 # ============================================================
 
 
-def carregar_knowledge_base(pasta: str, tipo: str) -> str:
-
-    extensoes = {
-        "pdf": [".pdf"],
-        "word": [".docx"],
-        "excel": [".xlsx", ".xlsm"],
-        "list": [".iqy"]
-    }
+def carregar_knowledge_base(pasta: str) -> str:
+    """
+    Varre a pasta e identifica sozinho o tipo de cada
+    arquivo pela extensão, usando o leitor apropriado.
+    Arquivos com extensão não suportada são ignorados
+    (com aviso), não interrompem a execução.
+    """
 
     if not os.path.isdir(pasta):
 
         raise ValueError(f"A pasta não existe: {pasta}")
 
     arquivos = []
+
+    ignorados = []
 
     for nome in sorted(os.listdir(pasta)):
 
@@ -315,32 +328,46 @@ def carregar_knowledge_base(pasta: str, tipo: str) -> str:
 
         extensao = os.path.splitext(nome)[1].lower()
 
-        if extensao in extensoes[tipo]:
+        if extensao in EXTENSAO_PARA_LEITOR:
 
-            arquivos.append(caminho)
+            arquivos.append((caminho, extensao))
+
+        else:
+
+            ignorados.append(nome)
 
     if not arquivos:
 
         raise ValueError(
-            f"Nenhum arquivo do tipo " f"'{tipo}' encontrado na pasta " f"'{pasta}'."
+            f"Nenhum arquivo com extensão suportada "
+            f"({', '.join(sorted(EXTENSAO_PARA_LEITOR))}) "
+            f"encontrado na pasta '{pasta}'."
         )
 
     print()
-    print(f"{len(arquivos)} arquivo(s) encontrado(s).")
+    print(f"{len(arquivos)} arquivo(s) reconhecido(s) encontrado(s).")
+
+    if ignorados:
+
+        print(
+            f"{len(ignorados)} arquivo(s) com extensão "
+            f"não suportada foram ignorados: "
+            f"{', '.join(ignorados)}"
+        )
 
     print()
 
     textos = []
 
-    for caminho in arquivos:
+    for caminho, extensao in arquivos:
 
         nome = os.path.basename(caminho)
 
-        print(f"[LEITURA] {nome}")
+        print(f"[LEITURA] {nome} " f"(tipo detectado: {extensao})")
 
         try:
 
-            texto = ler_arquivo(caminho, tipo)
+            texto = ler_arquivo(caminho, extensao)
 
             if not texto.strip():
 
@@ -817,11 +844,9 @@ def modo_gerar(args):
 
     print("=" * 70)
 
-    print(f"Tipo de arquivo: {args.tipo}")
-
     print(f"Pasta: {args.pasta}")
 
-    contexto = carregar_knowledge_base(pasta=args.pasta, tipo=args.tipo)
+    contexto = carregar_knowledge_base(pasta=args.pasta)
 
     print()
 
@@ -883,7 +908,7 @@ def modo_completo(args):
 
     print("=" * 70)
 
-    contexto = carregar_knowledge_base(pasta=args.pasta, tipo=args.tipo)
+    contexto = carregar_knowledge_base(pasta=args.pasta)
 
     print()
 
@@ -931,14 +956,13 @@ def obter_argumentos():
     )
 
     gerar.add_argument(
-        "--tipo",
+        "--pasta",
         required=True,
-        choices=["pdf", "word", "excel", "list"],
-        help=("Tipo dos arquivos " "da Knowledge Base."),
-    )
-
-    gerar.add_argument(
-        "--pasta", required=True, help=("Pasta contendo " "os arquivos.")
+        help=(
+            "Pasta contendo os arquivos da Knowledge Base "
+            "(o tipo de cada arquivo é detectado "
+            "automaticamente pela extensão)."
+        ),
     )
 
     gerar.add_argument(
@@ -978,9 +1002,15 @@ def obter_argumentos():
         "completo", help=("Gera os testes e " "testa o agente.")
     )
 
-    completo.add_argument("--tipo", required=True, choices=["pdf", "word", "excel"])
-
-    completo.add_argument("--pasta", required=True)
+    completo.add_argument(
+        "--pasta",
+        required=True,
+        help=(
+            "Pasta contendo os arquivos da Knowledge Base "
+            "(o tipo de cada arquivo é detectado "
+            "automaticamente pela extensão)."
+        ),
+    )
 
     completo.add_argument("--quantidade", type=int, default=10)
 
