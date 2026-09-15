@@ -1,41 +1,3 @@
-"""
-Framework de Validação de Agentes Copilot Studio
-================================================
-
-MODOS DE EXECUÇÃO:
-
-1. Gerar perguntas e respostas a partir da Knowledge Base:
-
-   python validar_agente.py gerar \
-       --pasta ./knowledge_base \
-       --quantidade 10
-
-2. Testar o agente usando um arquivo de testes já gerado:
-
-   python validar_agente.py testar \
-       --arquivo testes_gerados.txt
-
-3. Gerar os testes e testar o agente na sequência:
-
-   python validar_agente.py completo \
-       --pasta ./knowledge_base \
-       --quantidade 10
-
-O tipo de cada arquivo na pasta é detectado automaticamente
-pela extensão — basta colocar os arquivos na pasta, sem
-precisar informar o formato.
-
-Formatos suportados:
-
-- PDF (.pdf)
-- Word (.docx)
-- Excel (.xlsx / .xlsm)
-- Web Query (.iqy)
-
-Arquivos com extensão não reconhecida são ignorados (com
-aviso no console), não interrompem a execução.
-"""
-
 import os
 import json
 import time
@@ -47,10 +9,6 @@ from typing import List, Dict, Optional
 
 from openai import OpenAI
 
-# ============================================================
-# DOTENV
-# ============================================================
-
 try:
     from dotenv import load_dotenv
 
@@ -59,34 +17,13 @@ try:
 except ImportError:
     pass
 
-
-# ============================================================
-# CONFIGURAÇÃO
-# ============================================================
-
 CONFIG = {
-    # --------------------------------------------------------
-    # LLM
-    # --------------------------------------------------------
     "LLM_API_URL": os.environ.get("LLM_API_URL", ""),
     "LLM_API_KEY": os.environ.get("LLM_API_KEY", ""),
-    "LLM_MODEL": os.environ.get("LLM_MODEL", "gpt-5.6-luna"),
-    # --------------------------------------------------------
-    # COPILOT STUDIO
-    # --------------------------------------------------------
-    "COPILOT_DIRECT_LINE_SECRET": os.environ.get("COPILOT_DIRECT_LINE_SECRET", ""),
-    "COPILOT_DIRECT_LINE_BASE": "https://directline.botframework.com/v3/directline",
-    # --------------------------------------------------------
-    # TESTES
-    # --------------------------------------------------------
+    "LLM_MODEL": os.environ.get("LLM_MODEL"),
     "PERGUNTAS_POR_CATEGORIA": 5,
     "TIMEOUT_RESPOSTA_AGENTE": 15,
 }
-
-
-# ============================================================
-# CATEGORIAS
-# ============================================================
 
 CATEGORIAS = {
     "conhecimento": "Perguntas diretas cuja resposta está claramente "
@@ -100,11 +37,6 @@ CATEGORIAS = {
     "tom": "Perguntas que testam se o agente mantém o tom, "
     "formalidade e estilo esperados.",
 }
-
-
-# ============================================================
-# ESTRUTURA DOS CASOS
-# ============================================================
 
 
 @dataclass
@@ -123,11 +55,6 @@ class CasoDeTeste:
     justificativa: Optional[str] = None
 
     erro: Optional[str] = None
-
-
-# ============================================================
-# LLM
-# ============================================================
 
 
 def call_llm(system_prompt: str, user_prompt: str, json_mode: bool = True) -> str:
@@ -150,11 +77,6 @@ def call_llm(system_prompt: str, user_prompt: str, json_mode: bool = True) -> st
     return response.output_text
 
 
-# ============================================================
-# LEITURA DE PDF
-# ============================================================
-
-
 def ler_pdf(caminho: str) -> str:
 
     from pypdf import PdfReader
@@ -174,11 +96,6 @@ def ler_pdf(caminho: str) -> str:
     return "\n\n".join(paginas)
 
 
-# ============================================================
-# LEITURA DE WORD
-# ============================================================
-
-
 def ler_word(caminho: str) -> str:
 
     from docx import Document
@@ -186,16 +103,11 @@ def ler_word(caminho: str) -> str:
     doc = Document(caminho)
 
     textos = []
-
-    # Parágrafos
-
     for paragrafo in doc.paragraphs:
 
         if paragrafo.text.strip():
 
             textos.append(paragrafo.text.strip())
-
-    # Tabelas
 
     for tabela in doc.tables:
 
@@ -207,11 +119,6 @@ def ler_word(caminho: str) -> str:
         )
 
     return "\n".join(textos)
-
-
-# ============================================================
-# LEITURA DE EXCEL
-# ============================================================
 
 
 def ler_excel(caminho: str) -> str:
@@ -244,32 +151,6 @@ def ler_excel(caminho: str) -> str:
 
 
 # ============================================================
-# LEITURA DE UM ARQUIVO
-# ============================================================
-
-
-# ============================================================
-# LER LISTS
-# ============================================================
-
-def ler_iqy(caminho: str) -> str:
-    """
-    Lê um arquivo .iqy e retorna seu conteúdo.
-    O .iqy normalmente contém uma consulta/URL,
-    e não necessariamente os dados da lista.
-    """
-
-    with open(
-        caminho,
-        "r",
-        encoding="utf-8",
-        errors="ignore"
-    ) as arquivo:
-
-        return arquivo.read()
-
-
-# ============================================================
 # MAPEAMENTO EXTENSÃO -> LEITOR
 # ============================================================
 #
@@ -282,7 +163,6 @@ EXTENSAO_PARA_LEITOR = {
     ".docx": ler_word,
     ".xlsx": ler_excel,
     ".xlsm": ler_excel,
-    ".iqy": ler_iqy,
 }
 
 
@@ -297,18 +177,7 @@ def ler_arquivo(caminho: str, extensao: str) -> str:
     return leitor(caminho)
 
 
-# ============================================================
-# CARREGAR KNOWLEDGE BASE
-# ============================================================
-
-
 def carregar_knowledge_base(pasta: str) -> str:
-    """
-    Varre a pasta e identifica sozinho o tipo de cada
-    arquivo pela extensão, usando o leitor apropriado.
-    Arquivos com extensão não suportada são ignorados
-    (com aviso), não interrompem a execução.
-    """
 
     if not os.path.isdir(pasta):
 
@@ -388,11 +257,6 @@ def carregar_knowledge_base(pasta: str) -> str:
     return "\n\n".join(textos)
 
 
-# ============================================================
-# GERAR PERGUNTAS E RESPOSTAS
-# ============================================================
-
-
 def gerar_perguntas_respostas(contexto: str, quantidade: int) -> List[Dict[str, str]]:
 
     system_prompt = """
@@ -462,11 +326,6 @@ Responda em formato JSON.
     return parsed.get("casos", [])
 
 
-# ============================================================
-# SALVAR TESTES EM TXT
-# ============================================================
-
-
 def salvar_testes_txt(casos: List[Dict[str, str]], caminho: str):
 
     with open(caminho, "w", encoding="utf-8") as f:
@@ -489,11 +348,6 @@ def salvar_testes_txt(casos: List[Dict[str, str]], caminho: str):
     print(f"[OK] Arquivo gerado: {caminho}")
 
     print(f"[OK] Total de perguntas: " f"{len(casos)}")
-
-
-# ============================================================
-# LER TESTES DO TXT
-# ============================================================
 
 
 def carregar_testes_txt(caminho: str) -> List[CasoDeTeste]:
@@ -561,11 +415,6 @@ def carregar_testes_txt(caminho: str) -> List[CasoDeTeste]:
             )
 
     return casos
-
-
-# ============================================================
-# CLIENTE COPILOT DIRECT LINE
-# ============================================================
 
 
 class ClienteCopilotDirectLine:
@@ -651,11 +500,6 @@ class ClienteCopilotDirectLine:
         raise TimeoutError("O agente não respondeu " "dentro do tempo limite.")
 
 
-# ============================================================
-# TESTAR AGENTE
-# ============================================================
-
-
 def testar_agente(casos: List[CasoDeTeste], secret_direct_line: str = None):
 
     secret = secret_direct_line or CONFIG["COPILOT_DIRECT_LINE_SECRET"]
@@ -687,11 +531,6 @@ def testar_agente(casos: List[CasoDeTeste], secret_direct_line: str = None):
         time.sleep(0.5)
 
     return casos
-
-
-# ============================================================
-# LLM-AS-JUDGE
-# ============================================================
 
 
 def julgar_respostas(casos: List[CasoDeTeste]):
@@ -775,11 +614,6 @@ Avalie a resposta real e responda em formato JSON.
     return casos
 
 
-# ============================================================
-# RELATÓRIO
-# ============================================================
-
-
 def gerar_relatorio(
     casos: List[CasoDeTeste], salvar_json: str = "resultado_validacao.json"
 ):
@@ -831,11 +665,6 @@ def gerar_relatorio(
     print(f"Resultado salvo em: " f"{salvar_json}")
 
 
-# ============================================================
-# MODO GERAR
-# ============================================================
-
-
 def modo_gerar(args):
 
     print("=" * 70)
@@ -865,11 +694,6 @@ def modo_gerar(args):
     salvar_testes_txt(casos, args.saida)
 
 
-# ============================================================
-# MODO TESTAR
-# ============================================================
-
-
 def modo_testar(args):
 
     print("=" * 70)
@@ -893,11 +717,6 @@ def modo_testar(args):
     casos = julgar_respostas(casos)
 
     gerar_relatorio(casos, args.relatorio)
-
-
-# ============================================================
-# MODO COMPLETO
-# ============================================================
 
 
 def modo_completo(args):
@@ -934,11 +753,6 @@ def modo_completo(args):
     gerar_relatorio(casos, args.relatorio)
 
 
-# ============================================================
-# ARGUMENTOS DO TERMINAL
-# ============================================================
-
-
 def obter_argumentos():
 
     parser = argparse.ArgumentParser(
@@ -946,10 +760,6 @@ def obter_argumentos():
     )
 
     subparsers = parser.add_subparsers(dest="comando", required=True)
-
-    # ========================================================
-    # GERAR
-    # ========================================================
 
     gerar = subparsers.add_parser(
         "gerar", help=("Extrai a Knowledge Base " "e gera perguntas.")
@@ -976,10 +786,6 @@ def obter_argumentos():
         "--saida", default="testes_gerados.txt", help=("Arquivo TXT de saída.")
     )
 
-    # ========================================================
-    # TESTAR
-    # ========================================================
-
     testar = subparsers.add_parser(
         "testar", help=("Testa o agente usando " "um TXT existente.")
     )
@@ -993,10 +799,6 @@ def obter_argumentos():
         default="resultado_validacao.json",
         help=("Arquivo JSON do relatório."),
     )
-
-    # ========================================================
-    # COMPLETO
-    # ========================================================
 
     completo = subparsers.add_parser(
         "completo", help=("Gera os testes e " "testa o agente.")
@@ -1020,10 +822,6 @@ def obter_argumentos():
 
     return parser.parse_args()
 
-
-# ============================================================
-# MAIN
-# ============================================================
 
 if __name__ == "__main__":
 
